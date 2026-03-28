@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Be still</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script>
+  // Guard — redirect to login if no active session
+  if (!sessionStorage.getItem('bestill_auth')) {
+    window.location.replace('login.html');
+  }
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -303,7 +309,10 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
         Clients
       </button>
     </nav>
-    <div class="sidebar-footer"><p>your pace, your space</p></div>
+    <div class="sidebar-footer">
+      <p>your pace, your space</p>
+      <button onclick="logout()" style="margin-top:10px;width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border-mid);background:transparent;font-size:12px;color:var(--ink-faint);font-family:var(--font-body);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--cream-dark)'" onmouseout="this.style.background='transparent'">Sign out</button>
+    </div>
   </aside>
 
   <!-- Main -->
@@ -470,6 +479,7 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
 <script>
 const STORAGE_KEY = 'bestill_bookings';
 const STORAGE_ID_KEY = 'bestill_nextid';
+const CLIENTS_KEY = 'bestill_clients';
 
 const AVATAR_PALETTES = [
   { bg:'#EEF1EB', fg:'#3B4D32' },
@@ -490,10 +500,7 @@ const SEED_BOOKINGS = [
 ];
 
 function loadBookings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
 }
 function saveBookings() {
   try {
@@ -501,10 +508,32 @@ function saveBookings() {
     localStorage.setItem(STORAGE_ID_KEY, String(nextId));
   } catch {}
 }
+function loadClients() {
+  try { const r = localStorage.getItem(CLIENTS_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+function saveClients() {
+  try { localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients)); } catch {}
+}
+// Register a client by name — only adds if not already present
+function registerClient(name) {
+  const key = name.trim().toLowerCase();
+  if (!clients.find(c => c.key === key)) {
+    clients.push({ key, name: name.trim(), since: new Date().toISOString().slice(0,10) });
+    saveClients();
+  }
+}
 
 const stored = loadBookings();
 let bookings = stored || JSON.parse(JSON.stringify(SEED_BOOKINGS));
 let nextId = parseInt(localStorage.getItem(STORAGE_ID_KEY) || '7', 10);
+
+// Clients: persistent, separate from bookings
+const storedClients = loadClients();
+let clients = storedClients || [];
+// Seed clients from seed bookings on first load
+if (!storedClients) {
+  SEED_BOOKINGS.forEach(b => registerClient(b.name));
+}
 let curFilter = 'all';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth() + 1;
@@ -535,6 +564,12 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── Auth ── */
+function logout() {
+  sessionStorage.removeItem('bestill_auth');
+  window.location.href = 'login.html';
+}
+
 /* ── Render stats ── */
 function renderStats() {
   const now = new Date();
@@ -542,7 +577,7 @@ function renderStats() {
   document.getElementById('stat-month').textContent   = bookings.filter(b=>b.date.startsWith(ym)).length;
   document.getElementById('stat-pending').textContent = bookings.filter(b=>b.status==='pending').length;
   document.getElementById('stat-revenue').textContent = '$' + bookings.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0).toLocaleString();
-  document.getElementById('stat-clients').textContent = new Set(bookings.map(b=>b.name)).size;
+  document.getElementById('stat-clients').textContent = clients.length;
   const total = bookings.length;
   document.getElementById('booking-count-label').textContent = `${total} booking${total!==1?'s':''} total`;
 }
@@ -627,26 +662,38 @@ function changeMonth(dir) {
 
 /* ── Clients ── */
 function renderClients() {
-  const map={};
-  bookings.forEach(b=>{
-    if(!map[b.name]) map[b.name]={name:b.name,count:0,total:0,paid:0};
-    map[b.name].count++;
-    map[b.name].total+=b.amount;
-    if(b.status==='paid') map[b.name].paid+=b.amount;
+  // Build stats from current bookings
+  const stats = {};
+  bookings.forEach(b => {
+    const key = b.name.trim().toLowerCase();
+    if (!stats[key]) stats[key] = { count:0, total:0, paid:0 };
+    stats[key].count++;
+    stats[key].total += b.amount;
+    if (b.status === 'paid') stats[key].paid += b.amount;
   });
-  const clients=Object.values(map);
-  document.getElementById('client-count-label').textContent=`${clients.length} client${clients.length!==1?'s':''}`;
-  document.getElementById('client-grid').innerHTML=clients.map(c=>{
-    const p=AVATAR_PALETTES[colorIdx(c.name)];
+
+  document.getElementById('client-count-label').textContent = `${clients.length} client${clients.length!==1?'s':''}`;
+
+  if (!clients.length) {
+    document.getElementById('client-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">No clients yet — they'll appear here when you add a booking</div>`;
+    return;
+  }
+
+  document.getElementById('client-grid').innerHTML = clients.map(c => {
+    const p = AVATAR_PALETTES[colorIdx(c.name)];
+    const s = stats[c.key] || { count:0, total:0, paid:0 };
     return `<div class="client-card">
       <div class="client-card-top">
         <div class="avatar" style="background:${p.bg};color:${p.fg};width:40px;height:40px;font-size:13px">${initials(c.name)}</div>
-        <div class="client-card-name">${escHtml(c.name)}</div>
+        <div>
+          <div class="client-card-name">${escHtml(c.name)}</div>
+          <div style="font-size:11px;color:var(--ink-faint);margin-top:2px">since ${c.since}</div>
+        </div>
       </div>
       <div class="client-card-stats">
-        <div class="client-stat-item"><div class="client-stat-label">Bookings</div><div class="client-stat-value">${c.count}</div></div>
-        <div class="client-stat-item"><div class="client-stat-label">Total</div><div class="client-stat-value">$${c.total.toLocaleString()}</div></div>
-        <div class="client-stat-item"><div class="client-stat-label">Paid</div><div class="client-stat-value">$${c.paid.toLocaleString()}</div></div>
+        <div class="client-stat-item"><div class="client-stat-label">Bookings</div><div class="client-stat-value">${s.count}</div></div>
+        <div class="client-stat-item"><div class="client-stat-label">Total</div><div class="client-stat-value">$${s.total.toLocaleString()}</div></div>
+        <div class="client-stat-item"><div class="client-stat-label">Paid</div><div class="client-stat-value">$${s.paid.toLocaleString()}</div></div>
       </div>
     </div>`;
   }).join('');
@@ -735,9 +782,12 @@ function saveBooking() {
   if(editingId !== null) {
     const idx = bookings.findIndex(b=>b.id===editingId);
     if(idx>-1) bookings[idx] = { ...bookings[idx], name, service, date, time, amount, status, notes };
+    // If name changed, register the new name too
+    registerClient(name);
     showToast('Booking updated');
   } else {
     bookings.unshift({ id:nextId++, name, service, date, time, amount, status, notes });
+    registerClient(name);
     showToast('Booking added');
   }
 
