@@ -474,6 +474,18 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
   </div>
 </div>
 
+<!-- Confirm delete client dialog -->
+<div class="confirm-overlay" id="confirm-client-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">Remove client?</div>
+    <div class="confirm-msg" id="confirm-client-msg">This will remove the client profile. Their past bookings won't be affected.</div>
+    <div class="confirm-actions">
+      <button class="btn" onclick="closeConfirmClient()">Keep them</button>
+      <button class="btn btn-danger" onclick="confirmDeleteClient()">Remove</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -683,12 +695,17 @@ function renderClients() {
     const p = AVATAR_PALETTES[colorIdx(c.name)];
     const s = stats[c.key] || { count:0, total:0, paid:0 };
     return `<div class="client-card">
-      <div class="client-card-top">
-        <div class="avatar" style="background:${p.bg};color:${p.fg};width:40px;height:40px;font-size:13px">${initials(c.name)}</div>
-        <div>
-          <div class="client-card-name">${escHtml(c.name)}</div>
-          <div style="font-size:11px;color:var(--ink-faint);margin-top:2px">since ${c.since}</div>
+      <div class="client-card-top" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar" style="background:${p.bg};color:${p.fg};width:40px;height:40px;font-size:13px">${initials(c.name)}</div>
+          <div>
+            <div class="client-card-name">${escHtml(c.name)}</div>
+            <div style="font-size:11px;color:var(--ink-faint);margin-top:2px">since ${c.since}</div>
+          </div>
         </div>
+        <button class="icon-btn delete" title="Remove client" onclick="askDeleteClient('${c.key.replace(/'/g,"\\'")}')">
+          <svg viewBox="0 0 14 14"><polyline points="2,4 12,4"/><path d="M5 4V2h4v2"/><path d="M3 4l.8 8.2a1 1 0 001 .8h4.4a1 1 0 001-.8L11 4"/></svg>
+        </button>
       </div>
       <div class="client-card-stats">
         <div class="client-stat-item"><div class="client-stat-label">Bookings</div><div class="client-stat-value">${s.count}</div></div>
@@ -813,6 +830,27 @@ function confirmDelete() {
   showToast('Booking deleted');
 }
 
+/* ── Delete client ── */
+let pendingDeleteClientKey = null;
+function askDeleteClient(key) {
+  pendingDeleteClientKey = key;
+  const c = clients.find(x => x.key === key);
+  if (c) document.getElementById('confirm-client-msg').textContent = `This will remove ${c.name} from your clients list. Their past bookings won't be affected.`;
+  document.getElementById('confirm-client-overlay').classList.add('open');
+}
+function closeConfirmClient() {
+  pendingDeleteClientKey = null;
+  document.getElementById('confirm-client-overlay').classList.remove('open');
+}
+function confirmDeleteClient() {
+  clients = clients.filter(c => c.key !== pendingDeleteClientKey);
+  saveClients();
+  closeConfirmClient();
+  renderClients();
+  renderStats();
+  showToast('Client removed');
+}
+
 /* ── Toast ── */
 function showToast(msg) {
   const t=document.getElementById('toast');
@@ -827,6 +865,9 @@ document.getElementById('modal-overlay').addEventListener('click',e=>{
 });
 document.getElementById('confirm-overlay').addEventListener('click',e=>{
   if(e.target===document.getElementById('confirm-overlay')) closeConfirm();
+});
+document.getElementById('confirm-client-overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('confirm-client-overlay')) closeConfirmClient();
 });
 
 /* ── Init ── */
