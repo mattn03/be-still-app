@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Be still</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-<script>
-  // Guard — redirect to login if no active session
-  if (!sessionStorage.getItem('bestill_auth')) {
-    window.location.replace('login.html');
-  }
-</script>
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -311,7 +306,6 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
     </nav>
     <div class="sidebar-footer">
       <p>your pace, your space</p>
-      <button onclick="logout()" style="margin-top:10px;width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border-mid);background:transparent;font-size:12px;color:var(--ink-faint);font-family:var(--font-body);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--cream-dark)'" onmouseout="this.style.background='transparent'">Sign out</button>
     </div>
   </aside>
 
@@ -567,12 +561,6 @@ function badgeHTML(status) {
 }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* ── Auth ── */
-function logout() {
-  sessionStorage.removeItem('bestill_auth');
-  window.location.href = 'login.html';
 }
 
 /* ── Render stats ── */
