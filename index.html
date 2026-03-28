@@ -502,14 +502,7 @@ const AVATAR_PALETTES = [
   { bg:'#FBEAF0', fg:'#72243E' },
 ];
 
-const SEED_BOOKINGS = [
-  {id:1,name:'Sarah Chen',   service:'Brand identity',    date:'2026-03-28',time:'10:00',amount:800, status:'confirmed',notes:'Prefers async feedback via email.'},
-  {id:2,name:'Marco Rivera', service:'Strategy call',     date:'2026-03-28',time:'14:00',amount:150, status:'pending',  notes:''},
-  {id:3,name:'Jess Park',    service:'Logo design',       date:'2026-04-02',time:'09:30',amount:500, status:'paid',     notes:'Paid via Venmo. Send receipt.'},
-  {id:4,name:'Tom Albright', service:'Website audit',     date:'2026-04-05',time:'11:00',amount:300, status:'confirmed',notes:''},
-  {id:5,name:'Anika Seo',    service:'Copywriting',       date:'2026-04-08',time:'15:00',amount:400, status:'pending',  notes:'Follow up after April 1st.'},
-  {id:6,name:'Luke Ferreira',service:'Social media pack', date:'2026-03-20',time:'13:00',amount:600, status:'paid',     notes:''},
-];
+const SEED_BOOKINGS = [];
 
 function loadBookings() {
   try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
