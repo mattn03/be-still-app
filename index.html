@@ -346,6 +346,7 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
             <tr>
               <th>Client</th>
               <th>Date</th>
+              <th>Duration</th>
               <th>Status</th>
               <th>Amount</th>
               <th>Note</th>
@@ -429,7 +430,21 @@ textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
       <button class="modal-close" onclick="closeModal()">&#215;</button>
     </div>
     <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="f-name" placeholder="e.g. Sarah Chen" /></div>
-    <div class="form-group"><label class="form-label">Service</label><input class="form-input" id="f-service" placeholder="e.g. Brand identity, Strategy call..." /></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Service</label>
+        <select class="form-input" id="f-service">
+          <option value="">Select a service...</option>
+          <option value="Massage">Massage</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Duration</label>
+        <select class="form-input" id="f-duration">
+          <option value="">—</option>
+          <option value="60 min">60 min</option>
+          <option value="90 min">90 min</option>
+        </select>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="f-date" type="date" /></div>
       <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="f-time" type="time" /></div>
@@ -581,7 +596,7 @@ function renderBookings() {
   list = [...list].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
   const tbody = document.getElementById('booking-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No bookings here yet</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No bookings here yet</div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(b => {
@@ -589,12 +604,16 @@ function renderBookings() {
     const noteCell = b.notes
       ? `<div class="note-preview" title="${escHtml(b.notes)}">${escHtml(b.notes)}</div>`
       : `<span style="color:var(--ink-faint);font-size:12px">—</span>`;
+    const durationCell = b.duration
+      ? `<span style="font-size:12px;color:var(--ink-muted)">${escHtml(b.duration)}</span>`
+      : `<span style="color:var(--ink-faint);font-size:12px">—</span>`;
     return `<tr class="booking-row">
       <td><div class="client-cell">
         <div class="avatar" style="background:${p.bg};color:${p.fg}">${initials(b.name)}</div>
         <div><div class="client-name">${escHtml(b.name)}</div><div class="client-service">${escHtml(b.service)}</div></div>
       </div></td>
       <td><div class="date-text">${fmtDate(b.date)}<br><span style="color:var(--ink-faint);font-size:12px">${b.time}</span></div></td>
+      <td>${durationCell}</td>
       <td>${badgeHTML(b.status)}</td>
       <td class="amount-text">$${b.amount.toLocaleString()}</td>
       <td>${noteCell}</td>
@@ -744,13 +763,14 @@ function openEdit(id) {
   editingId = id;
   document.getElementById('modal-title').textContent = 'Edit booking';
   document.getElementById('modal-save-btn').textContent = 'Save changes';
-  document.getElementById('f-name').value    = b.name;
-  document.getElementById('f-service').value = b.service;
-  document.getElementById('f-date').value    = b.date;
-  document.getElementById('f-time').value    = b.time;
-  document.getElementById('f-amount').value  = b.amount;
-  document.getElementById('f-status').value  = b.status;
-  document.getElementById('f-notes').value   = b.notes || '';
+  document.getElementById('f-name').value     = b.name;
+  document.getElementById('f-service').value  = b.service;
+  document.getElementById('f-duration').value = b.duration || '';
+  document.getElementById('f-date').value     = b.date;
+  document.getElementById('f-time').value     = b.time;
+  document.getElementById('f-amount').value   = b.amount;
+  document.getElementById('f-status').value   = b.status;
+  document.getElementById('f-notes').value    = b.notes || '';
   document.getElementById('modal-delete-area').innerHTML =
     `<button class="btn btn-danger" onclick="askDelete(${id});closeModal()">Delete</button>`;
   document.getElementById('modal-overlay').classList.add('open');
@@ -762,29 +782,31 @@ function closeModal() {
 }
 
 function clearForm() {
-  ['f-name','f-service','f-date','f-time','f-amount','f-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-status').value='pending';
+  ['f-name','f-date','f-time','f-amount','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-service').value  = '';
+  document.getElementById('f-duration').value = '';
+  document.getElementById('f-status').value   = 'pending';
 }
 
 function saveBooking() {
-  const name    = document.getElementById('f-name').value.trim();
-  const service = document.getElementById('f-service').value.trim();
-  const date    = document.getElementById('f-date').value;
-  const time    = document.getElementById('f-time').value || '09:00';
-  const amount  = parseFloat(document.getElementById('f-amount').value) || 0;
-  const status  = document.getElementById('f-status').value;
-  const notes   = document.getElementById('f-notes').value.trim();
+  const name     = document.getElementById('f-name').value.trim();
+  const service  = document.getElementById('f-service').value;
+  const duration = document.getElementById('f-duration').value;
+  const date     = document.getElementById('f-date').value;
+  const time     = document.getElementById('f-time').value || '09:00';
+  const amount   = parseFloat(document.getElementById('f-amount').value) || 0;
+  const status   = document.getElementById('f-status').value;
+  const notes    = document.getElementById('f-notes').value.trim();
 
   if(!name||!service||!date) { showToast('Please fill in name, service, and date.'); return; }
 
   if(editingId !== null) {
     const idx = bookings.findIndex(b=>b.id===editingId);
-    if(idx>-1) bookings[idx] = { ...bookings[idx], name, service, date, time, amount, status, notes };
-    // If name changed, register the new name too
+    if(idx>-1) bookings[idx] = { ...bookings[idx], name, service, duration, date, time, amount, status, notes };
     registerClient(name);
     showToast('Booking updated');
   } else {
-    bookings.unshift({ id:nextId++, name, service, date, time, amount, status, notes });
+    bookings.unshift({ id:nextId++, name, service, duration, date, time, amount, status, notes });
     registerClient(name);
     showToast('Booking added');
   }
