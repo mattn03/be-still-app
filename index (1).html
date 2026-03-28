@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Be still</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sage: #6B7C5E;
+  --sage-dark: #4A5940;
+  --sage-light: #EEF1EB;
+  --sage-mid: #C5D0BB;
+  --cream: #FAF8F4;
+  --cream-dark: #F0EDE6;
+  --ink: #1E2219;
+  --ink-muted: #5A6356;
+  --ink-faint: #9CA896;
+  --white: #FFFFFF;
+  --border: rgba(90,99,86,0.15);
+  --border-mid: rgba(90,99,86,0.28);
+  --shadow-sm: 0 1px 3px rgba(30,34,25,0.08);
+  --shadow-md: 0 4px 24px rgba(30,34,25,0.13);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --sidebar-w: 220px;
+}
+
+html, body { height: 100%; background: var(--cream); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+
+/* ── Layout ── */
+.layout { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1.25rem;
+  display: flex; flex-direction: column; gap: 2rem;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 0.25rem; }
+.brand-icon { width: 32px; height: 32px; background: var(--sage); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.brand-icon svg { width: 16px; height: 16px; fill: #E8EDE3; }
+.brand-name { font-family: var(--font-display); font-size: 20px; font-weight: 500; color: var(--ink); font-style: italic; }
+
+.nav-section { display: flex; flex-direction: column; gap: 2px; }
+.nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); padding: 0 0.75rem; margin-bottom: 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6; flex-shrink: 0; }
+.nav-item:hover { background: var(--sage-light); color: var(--sage-dark); }
+.nav-item.active { background: var(--sage-light); color: var(--sage); font-weight: 500; }
+
+.sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border); }
+.sidebar-footer p { font-size: 11px; color: var(--ink-faint); text-align: center; font-family: var(--font-display); font-style: italic; }
+
+/* ── Mobile topbar (hidden on desktop) ── */
+.mobile-topbar {
+  display: none;
+  align-items: center; justify-content: space-between;
+  padding: 14px 1rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.mobile-brand { display: flex; align-items: center; gap: 8px; }
+.mobile-brand .brand-name { font-size: 18px; }
+.hamburger { width: 32px; height: 32px; border: 1px solid var(--border-mid); border-radius: var(--radius-sm); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.hamburger svg { width: 16px; height: 16px; stroke: var(--ink-muted); fill: none; stroke-width: 2; }
+
+/* Mobile drawer */
+.drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(30,34,25,0.35); z-index: 80; }
+.drawer-overlay.open { display: block; }
+.drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+  background: var(--white); z-index: 90;
+  padding: 2rem 1.25rem;
+  display: flex; flex-direction: column; gap: 2rem;
+  transform: translateX(-100%); transition: transform 0.25s ease;
+}
+.drawer.open { transform: translateX(0); }
+
+/* ── Main ── */
+.main { padding: 2.5rem 2.5rem 4rem; overflow-y: auto; }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+.page-title { font-family: var(--font-display); font-size: 32px; font-weight: 500; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+.page-subtitle { font-size: 13px; color: var(--ink-faint); margin-top: 4px; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border-mid); background: var(--white); color: var(--ink); transition: all 0.15s; }
+.btn:hover { background: var(--cream-dark); }
+.btn-primary { background: var(--sage); color: #E8EDE3; border-color: var(--sage); font-weight: 500; }
+.btn-primary:hover { background: var(--sage-dark); border-color: var(--sage-dark); }
+.btn-danger { background: transparent; color: #A32D2D; border-color: rgba(163,45,45,0.3); }
+.btn-danger:hover { background: #FCEBEB; }
+.btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.icon-btn { width: 28px; height: 28px; padding: 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-faint); transition: all 0.15s; }
+.icon-btn:hover { background: var(--cream-dark); color: var(--ink-muted); border-color: var(--border-mid); }
+.icon-btn.delete:hover { background: #FCEBEB; color: #A32D2D; border-color: rgba(163,45,45,0.3); }
+.icon-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── Stats ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 2rem; }
+.stat { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem 1.25rem 1rem; }
+.stat-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+.stat-value { font-family: var(--font-display); font-size: 28px; font-weight: 500; color: var(--ink); line-height: 1; }
+.stat-value.revenue { color: var(--sage); }
+.stat-sub { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+
+/* ── Views ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Filter pills ── */
+.filter-row { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; font-family: var(--font-body); }
+.pill:hover, .pill.active { background: var(--sage-light); color: var(--sage-dark); border-color: var(--sage-mid); }
+
+/* ── Booking table ── */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.booking-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.booking-table thead tr { border-bottom: 1px solid var(--border-mid); }
+.booking-table th { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); padding: 0 0.75rem 10px; text-align: left; white-space: nowrap; }
+.booking-table th.actions-col { text-align: right; }
+.booking-row { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+.booking-row:hover { background: var(--cream); }
+.booking-row td { padding: 12px 0.75rem; vertical-align: middle; }
+.client-cell { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+.client-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.client-service { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+.date-text { font-size: 13px; color: var(--ink-muted); white-space: nowrap; }
+.amount-text { font-size: 14px; font-weight: 500; color: var(--ink); }
+.note-preview { font-size: 11px; color: var(--ink-faint); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
+.actions-cell { display: flex; gap: 5px; justify-content: flex-end; }
+.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-confirmed { background: var(--sage-light); color: #3B4D32; }
+.badge-pending { background: #FAEEDA; color: #854F0B; }
+.badge-paid { background: #EAF3DE; color: #3B6D11; }
+.badge-cancelled { background: #FCEBEB; color: #A32D2D; }
+.empty-state { text-align: center; padding: 3rem; color: var(--ink-faint); font-family: var(--font-display); font-style: italic; font-size: 18px; }
+
+/* ── Calendar ── */
+.cal-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+.cal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.cal-month-name { font-family: var(--font-display); font-size: 22px; font-weight: 500; color: var(--ink); }
+.cal-arrows { display: flex; gap: 6px; }
+.cal-arrow { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--border-mid); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 16px; transition: background 0.12s; }
+.cal-arrow:hover { background: var(--cream-dark); }
+.cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+.cal-day-name { text-align: center; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); padding: 4px 0 8px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; color: var(--ink-faint); position: relative; transition: background 0.12s; }
+.cal-cell.cur-month { color: var(--ink); }
+.cal-cell:hover { background: var(--sage-light); }
+.cal-cell.today { background: var(--sage-light); color: var(--sage-dark); font-weight: 500; }
+.cal-cell.has-booking::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--sage); position: absolute; bottom: 5px; }
+.upcoming-section { margin-top: 1.5rem; }
+.section-title { font-size: 12px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
+.upcoming-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.upcoming-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); flex-shrink: 0; }
+.upcoming-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+.upcoming-svc { font-size: 12px; color: var(--ink-faint); }
+.upcoming-date { font-size: 12px; color: var(--ink-muted); margin-left: auto; white-space: nowrap; }
+
+/* ── Clients ── */
+.client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.client-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; transition: border-color 0.15s, box-shadow 0.15s; }
+.client-card:hover { border-color: var(--sage-mid); box-shadow: var(--shadow-sm); }
+.client-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+.client-card-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.client-card-stats { display: flex; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.client-stat-item { flex: 1; }
+.client-stat-label { font-size: 10px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 3px; }
+.client-stat-value { font-family: var(--font-display); font-size: 18px; font-weight: 500; color: var(--ink); }
+
+/* ── Modal ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(30,34,25,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 460px; box-shadow: var(--shadow-md); animation: slideUp 0.2s ease; margin: auto; }
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.modal-title { font-family: var(--font-display); font-size: 22px; font-weight: 500; color: var(--ink); font-style: italic; }
+.modal-close { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 18px; line-height: 1; transition: background 0.12s; }
+.modal-close:hover { background: var(--cream-dark); }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+.form-input { width: 100%; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-mid); font-size: 13px; font-family: var(--font-body); color: var(--ink); background: var(--white); transition: border-color 0.15s; outline: none; }
+.form-input:focus { border-color: var(--sage); }
+textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.modal-footer-right { display: flex; gap: 8px; }
+
+/* ── Confirm dialog ── */
+.confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(30,34,25,0.4); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
+.confirm-overlay.open { display: flex; }
+.confirm-box { background: var(--white); border-radius: var(--radius-lg); padding: 1.75rem; width: 100%; max-width: 340px; box-shadow: var(--shadow-md); text-align: center; animation: slideUp 0.18s ease; }
+.confirm-title { font-family: var(--font-display); font-size: 20px; font-weight: 500; color: var(--ink); margin-bottom: 8px; }
+.confirm-msg { font-size: 13px; color: var(--ink-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--ink); color: #E8EDE3; padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; z-index: 400; opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Mobile bottom nav ── */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--white); border-top: 1px solid var(--border);
+  z-index: 50;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+}
+.mobile-nav-inner { display: flex; justify-content: space-around; }
+.mobile-nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 4px 12px; color: var(--ink-faint); font-size: 10px; font-family: var(--font-body); font-weight: 500; letter-spacing: 0.04em; transition: color 0.15s; }
+.mobile-nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.mobile-nav-btn.active { color: var(--sage); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .mobile-topbar { display: flex; }
+  .mobile-nav { display: block; }
+  .main { padding: 1.25rem 1rem 6rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 24px; }
+  .page-title { font-size: 26px; }
+  .form-row { grid-template-columns: 1fr; }
+  .toast { bottom: 5rem; right: 1rem; left: 1rem; text-align: center; }
+}
+
+@media (max-width: 400px) {
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile topbar -->
+<div class="mobile-topbar">
+  <div class="mobile-brand">
+    <div class="brand-icon" style="width:28px;height:28px;border-radius:6px">
+      <svg viewBox="0 0 16 16" style="width:14px;height:14px;fill:#E8EDE3"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm.6 3v3.4l2.2 1.3-.6 1-2.6-1.6V5h1z"/></svg>
+    </div>
+    <span class="brand-name">Be still</span>
+  </div>
+  <button class="hamburger" onclick="openDrawer()">
+    <svg viewBox="0 0 16 16"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
+  </button>
+</div>
+
+<!-- Mobile drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 16 16" style="width:16px;height:16px;fill:#E8EDE3"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm.6 3v3.4l2.2 1.3-.6 1-2.6-1.6V5h1z"/></svg></div>
+    <span class="brand-name">Be still</span>
+  </div>
+  <nav class="nav-section">
+    <button class="nav-item active" onclick="switchTab('bookings',this);closeDrawer()">
+      <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>
+      Bookings
+    </button>
+    <button class="nav-item" onclick="switchTab('calendar',this);closeDrawer()">
+      <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M2 6h12"/><path d="M5 4V1M11 4V1"/><path d="M5 9h1M8 9h1M11 9h1M5 12h1M8 12h1"/></svg>
+      Calendar
+    </button>
+    <button class="nav-item" onclick="switchTab('clients',this);closeDrawer()">
+      <svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><circle cx="12" cy="5" r="2"/><path d="M14 13c0-2.21-1.34-4-3-4.5"/></svg>
+      Clients
+    </button>
+  </nav>
+  <div class="sidebar-footer"><p>your pace, your space</p></div>
+</div>
+
+<div class="layout">
+  <!-- Desktop Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm.6 3v3.4l2.2 1.3-.6 1-2.6-1.6V5h1z"/></svg></div>
+      <span class="brand-name">Be still</span>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">Menu</div>
+      <button class="nav-item active" onclick="switchTab('bookings',this)">
+        <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>
+        Bookings
+      </button>
+      <button class="nav-item" onclick="switchTab('calendar',this)">
+        <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M2 6h12"/><path d="M5 4V1M11 4V1"/><path d="M5 9h1M8 9h1M11 9h1M5 12h1M8 12h1"/></svg>
+        Calendar
+      </button>
+      <button class="nav-item" onclick="switchTab('clients',this)">
+        <svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><circle cx="12" cy="5" r="2"/><path d="M14 13c0-2.21-1.34-4-3-4.5"/></svg>
+        Clients
+      </button>
+    </nav>
+    <div class="sidebar-footer"><p>your pace, your space</p></div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Bookings -->
+    <div class="view active" id="view-bookings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Bookings</div>
+          <div class="page-subtitle" id="booking-count-label">—</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">
+          <svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+          New booking
+        </button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat"><div class="stat-label">This month</div><div class="stat-value" id="stat-month">0</div><div class="stat-sub">bookings</div></div>
+        <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">0</div><div class="stat-sub">awaiting</div></div>
+        <div class="stat"><div class="stat-label">Revenue</div><div class="stat-value revenue" id="stat-revenue">$0</div><div class="stat-sub">paid out</div></div>
+        <div class="stat"><div class="stat-label">Clients</div><div class="stat-value" id="stat-clients">0</div><div class="stat-sub">total</div></div>
+      </div>
+
+      <div class="filter-row">
+        <button class="pill active" onclick="filterBookings('all',this)">All</button>
+        <button class="pill" onclick="filterBookings('confirmed',this)">Confirmed</button>
+        <button class="pill" onclick="filterBookings('pending',this)">Pending</button>
+        <button class="pill" onclick="filterBookings('paid',this)">Paid</button>
+        <button class="pill" onclick="filterBookings('cancelled',this)">Cancelled</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="booking-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Amount</th>
+              <th>Note</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody id="booking-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="view" id="view-calendar">
+      <div class="page-header">
+        <div><div class="page-title">Calendar</div><div class="page-subtitle">Your schedule at a glance</div></div>
+        <button class="btn btn-primary" onclick="openModal()">
+          <svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+          New booking
+        </button>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-top">
+          <div class="cal-month-name" id="cal-month-label"></div>
+          <div class="cal-arrows">
+            <button class="cal-arrow" onclick="changeMonth(-1)">&#8249;</button>
+            <button class="cal-arrow" onclick="changeMonth(1)">&#8250;</button>
+          </div>
+        </div>
+        <div class="cal-days-header">
+          <div class="cal-day-name">Su</div><div class="cal-day-name">Mo</div><div class="cal-day-name">Tu</div>
+          <div class="cal-day-name">We</div><div class="cal-day-name">Th</div><div class="cal-day-name">Fr</div><div class="cal-day-name">Sa</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="upcoming-section">
+          <div class="section-title">Upcoming</div>
+          <div id="upcoming-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clients -->
+    <div class="view" id="view-clients">
+      <div class="page-header">
+        <div><div class="page-title">Clients</div><div class="page-subtitle" id="client-count-label">—</div></div>
+      </div>
+      <div class="client-grid" id="client-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn active" id="mnav-bookings" onclick="switchTab('bookings',this)">
+      <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>
+      Bookings
+    </button>
+    <button class="mobile-nav-btn" id="mnav-calendar" onclick="switchTab('calendar',this)">
+      <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M2 6h12"/><path d="M5 4V1M11 4V1"/><path d="M5 9h1M8 9h1M11 9h1M5 12h1M8 12h1"/></svg>
+      Calendar
+    </button>
+    <button class="mobile-nav-btn" style="color:var(--white);background:var(--sage);border-radius:50%;width:48px;height:48px;padding:0;margin-top:-12px;box-shadow:0 2px 8px rgba(107,124,94,0.5)" onclick="openModal()">
+      <svg viewBox="0 0 16 16" style="width:20px;height:20px"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+    </button>
+    <button class="mobile-nav-btn" id="mnav-clients" onclick="switchTab('clients',this)">
+      <svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><circle cx="12" cy="5" r="2"/><path d="M14 13c0-2.21-1.34-4-3-4.5"/></svg>
+      Clients
+    </button>
+    <button class="mobile-nav-btn" style="opacity:0;pointer-events:none">
+      <svg viewBox="0 0 16 16"></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Booking Modal (add & edit) -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New booking</div>
+      <button class="modal-close" onclick="closeModal()">&#215;</button>
+    </div>
+    <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="f-name" placeholder="e.g. Sarah Chen" /></div>
+    <div class="form-group"><label class="form-label">Service</label><input class="form-input" id="f-service" placeholder="e.g. Brand identity, Strategy call..." /></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="f-date" type="date" /></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="f-time" type="time" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Amount ($)</label><input class="form-input" id="f-amount" type="number" placeholder="0" min="0" /></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-input" id="f-status">
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="paid">Paid</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="f-notes" placeholder="Any details, reminders, or follow-ups..."></textarea></div>
+    <div class="modal-footer">
+      <div id="modal-delete-area"></div>
+      <div class="modal-footer-right">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modal-save-btn" onclick="saveBooking()">Add booking</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">Delete booking?</div>
+    <div class="confirm-msg">This can't be undone. The booking will be permanently removed.</div>
+    <div class="confirm-actions">
+      <button class="btn" onclick="closeConfirm()">Keep it</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'bestill_bookings';
+const STORAGE_ID_KEY = 'bestill_nextid';
+
+const AVATAR_PALETTES = [
+  { bg:'#EEF1EB', fg:'#3B4D32' },
+  { bg:'#EAF3DE', fg:'#3B6D11' },
+  { bg:'#E6F1FB', fg:'#185FA5' },
+  { bg:'#FAEEDA', fg:'#854F0B' },
+  { bg:'#EEEDFE', fg:'#3C3489' },
+  { bg:'#FBEAF0', fg:'#72243E' },
+];
+
+const SEED_BOOKINGS = [
+  {id:1,name:'Sarah Chen',   service:'Brand identity',    date:'2026-03-28',time:'10:00',amount:800, status:'confirmed',notes:'Prefers async feedback via email.'},
+  {id:2,name:'Marco Rivera', service:'Strategy call',     date:'2026-03-28',time:'14:00',amount:150, status:'pending',  notes:''},
+  {id:3,name:'Jess Park',    service:'Logo design',       date:'2026-04-02',time:'09:30',amount:500, status:'paid',     notes:'Paid via Venmo. Send receipt.'},
+  {id:4,name:'Tom Albright', service:'Website audit',     date:'2026-04-05',time:'11:00',amount:300, status:'confirmed',notes:''},
+  {id:5,name:'Anika Seo',    service:'Copywriting',       date:'2026-04-08',time:'15:00',amount:400, status:'pending',  notes:'Follow up after April 1st.'},
+  {id:6,name:'Luke Ferreira',service:'Social media pack', date:'2026-03-20',time:'13:00',amount:600, status:'paid',     notes:''},
+];
+
+function loadBookings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveBookings() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+    localStorage.setItem(STORAGE_ID_KEY, String(nextId));
+  } catch {}
+}
+
+const stored = loadBookings();
+let bookings = stored || JSON.parse(JSON.stringify(SEED_BOOKINGS));
+let nextId = parseInt(localStorage.getItem(STORAGE_ID_KEY) || '7', 10);
+let curFilter = 'all';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1;
+let editingId = null;
+let pendingDeleteId = null;
+
+function colorIdx(name) {
+  let h = 0;
+  for (let c of name) h = (h * 31 + c.charCodeAt(0)) % AVATAR_PALETTES.length;
+  return h;
+}
+function initials(name) { return name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function fmtDate(d) {
+  const [y,m,day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m-1]} ${+day}, ${y}`;
+}
+function fmtShortDate(d) {
+  const [y,m,day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m-1]} ${+day}`;
+}
+function badgeHTML(status) {
+  const map = {confirmed:'badge-confirmed',pending:'badge-pending',paid:'badge-paid',cancelled:'badge-cancelled'};
+  return `<span class="badge ${map[status]||''}">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Render stats ── */
+function renderStats() {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('stat-month').textContent   = bookings.filter(b=>b.date.startsWith(ym)).length;
+  document.getElementById('stat-pending').textContent = bookings.filter(b=>b.status==='pending').length;
+  document.getElementById('stat-revenue').textContent = '$' + bookings.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0).toLocaleString();
+  document.getElementById('stat-clients').textContent = new Set(bookings.map(b=>b.name)).size;
+  const total = bookings.length;
+  document.getElementById('booking-count-label').textContent = `${total} booking${total!==1?'s':''} total`;
+}
+
+/* ── Render bookings table ── */
+function renderBookings() {
+  let list = curFilter==='all' ? bookings : bookings.filter(b=>b.status===curFilter);
+  list = [...list].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  const tbody = document.getElementById('booking-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No bookings here yet</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(b => {
+    const p = AVATAR_PALETTES[colorIdx(b.name)];
+    const noteCell = b.notes
+      ? `<div class="note-preview" title="${escHtml(b.notes)}">${escHtml(b.notes)}</div>`
+      : `<span style="color:var(--ink-faint);font-size:12px">—</span>`;
+    return `<tr class="booking-row">
+      <td><div class="client-cell">
+        <div class="avatar" style="background:${p.bg};color:${p.fg}">${initials(b.name)}</div>
+        <div><div class="client-name">${escHtml(b.name)}</div><div class="client-service">${escHtml(b.service)}</div></div>
+      </div></td>
+      <td><div class="date-text">${fmtDate(b.date)}<br><span style="color:var(--ink-faint);font-size:12px">${b.time}</span></div></td>
+      <td>${badgeHTML(b.status)}</td>
+      <td class="amount-text">$${b.amount.toLocaleString()}</td>
+      <td>${noteCell}</td>
+      <td><div class="actions-cell">
+        <button class="icon-btn" title="Edit" onclick="openEdit(${b.id})">
+          <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+        </button>
+        <button class="icon-btn delete" title="Delete" onclick="askDelete(${b.id})">
+          <svg viewBox="0 0 14 14"><polyline points="2,4 12,4"/><path d="M5 4V2h4v2"/><path d="M3 4l.8 8.2a1 1 0 001 .8h4.4a1 1 0 001-.8L11 4"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterBookings(f, btn) {
+  curFilter = f;
+  document.querySelectorAll('.filter-row .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderBookings();
+}
+
+/* ── Calendar ── */
+function renderCalendar() {
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth-1]} ${calYear}`;
+  const firstDay = new Date(calYear, calMonth-1, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  const today = new Date();
+  const bookingDays = new Set(
+    bookings.filter(b=>b.date.startsWith(`${calYear}-${String(calMonth).padStart(2,'0')}`)).map(b=>+b.date.split('-')[2])
+  );
+  let cells = '';
+  for (let i=0;i<firstDay;i++) cells+=`<div class="cal-cell"></div>`;
+  for (let d=1;d<=daysInMonth;d++) {
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth-1 && today.getDate()===d;
+    cells += `<div class="cal-cell cur-month${isToday?' today':''}${bookingDays.has(d)?' has-booking':''}">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = cells;
+
+  const todayStr = today.toISOString().slice(0,10);
+  const upcoming = [...bookings].filter(b=>b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,6);
+  document.getElementById('upcoming-list').innerHTML = upcoming.length
+    ? upcoming.map(b=>`<div class="upcoming-item">
+        <div class="upcoming-dot"></div>
+        <div style="flex:1;min-width:0"><div class="upcoming-name">${escHtml(b.name)}</div><div class="upcoming-svc">${escHtml(b.service)}</div></div>
+        <div class="upcoming-date">${fmtShortDate(b.date)}, ${b.time}</div>
+      </div>`).join('')
+    : `<div style="color:var(--ink-faint);font-size:14px;padding:12px 0;font-family:var(--font-display);font-style:italic">Nothing coming up</div>`;
+}
+
+function changeMonth(dir) {
+  calMonth+=dir;
+  if(calMonth>12){calMonth=1;calYear++;}
+  if(calMonth<1){calMonth=12;calYear--;}
+  renderCalendar();
+}
+
+/* ── Clients ── */
+function renderClients() {
+  const map={};
+  bookings.forEach(b=>{
+    if(!map[b.name]) map[b.name]={name:b.name,count:0,total:0,paid:0};
+    map[b.name].count++;
+    map[b.name].total+=b.amount;
+    if(b.status==='paid') map[b.name].paid+=b.amount;
+  });
+  const clients=Object.values(map);
+  document.getElementById('client-count-label').textContent=`${clients.length} client${clients.length!==1?'s':''}`;
+  document.getElementById('client-grid').innerHTML=clients.map(c=>{
+    const p=AVATAR_PALETTES[colorIdx(c.name)];
+    return `<div class="client-card">
+      <div class="client-card-top">
+        <div class="avatar" style="background:${p.bg};color:${p.fg};width:40px;height:40px;font-size:13px">${initials(c.name)}</div>
+        <div class="client-card-name">${escHtml(c.name)}</div>
+      </div>
+      <div class="client-card-stats">
+        <div class="client-stat-item"><div class="client-stat-label">Bookings</div><div class="client-stat-value">${c.count}</div></div>
+        <div class="client-stat-item"><div class="client-stat-label">Total</div><div class="client-stat-value">$${c.total.toLocaleString()}</div></div>
+        <div class="client-stat-item"><div class="client-stat-label">Paid</div><div class="client-stat-value">$${c.paid.toLocaleString()}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Tab switching ── */
+function switchTab(tab, btn) {
+  // Update sidebar nav
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  // The clicked btn might be sidebar or drawer nav item
+  document.querySelectorAll('.nav-item, .mobile-nav-btn').forEach(n=>{
+    if(n===btn) n.classList.add('active');
+  });
+  // Also sync mobile bottom nav
+  ['bookings','calendar','clients'].forEach(t=>{
+    const el=document.getElementById('mnav-'+t);
+    if(el) el.classList.toggle('active', t===tab);
+  });
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  if(tab==='calendar') renderCalendar();
+  if(tab==='clients') renderClients();
+}
+
+/* ── Drawer (mobile) ── */
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+/* ── Modal ── */
+function openModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'New booking';
+  document.getElementById('modal-save-btn').textContent = 'Add booking';
+  document.getElementById('modal-delete-area').innerHTML = '';
+  clearForm();
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(), 50);
+}
+
+function openEdit(id) {
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit booking';
+  document.getElementById('modal-save-btn').textContent = 'Save changes';
+  document.getElementById('f-name').value    = b.name;
+  document.getElementById('f-service').value = b.service;
+  document.getElementById('f-date').value    = b.date;
+  document.getElementById('f-time').value    = b.time;
+  document.getElementById('f-amount').value  = b.amount;
+  document.getElementById('f-status').value  = b.status;
+  document.getElementById('f-notes').value   = b.notes || '';
+  document.getElementById('modal-delete-area').innerHTML =
+    `<button class="btn btn-danger" onclick="askDelete(${id});closeModal()">Delete</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function clearForm() {
+  ['f-name','f-service','f-date','f-time','f-amount','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-status').value='pending';
+}
+
+function saveBooking() {
+  const name    = document.getElementById('f-name').value.trim();
+  const service = document.getElementById('f-service').value.trim();
+  const date    = document.getElementById('f-date').value;
+  const time    = document.getElementById('f-time').value || '09:00';
+  const amount  = parseFloat(document.getElementById('f-amount').value) || 0;
+  const status  = document.getElementById('f-status').value;
+  const notes   = document.getElementById('f-notes').value.trim();
+
+  if(!name||!service||!date) { showToast('Please fill in name, service, and date.'); return; }
+
+  if(editingId !== null) {
+    const idx = bookings.findIndex(b=>b.id===editingId);
+    if(idx>-1) bookings[idx] = { ...bookings[idx], name, service, date, time, amount, status, notes };
+    showToast('Booking updated');
+  } else {
+    bookings.unshift({ id:nextId++, name, service, date, time, amount, status, notes });
+    showToast('Booking added');
+  }
+
+  saveBookings();
+  closeModal();
+  renderAll();
+}
+
+/* ── Delete ── */
+function askDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm() {
+  pendingDeleteId = null;
+  document.getElementById('confirm-overlay').classList.remove('open');
+}
+function confirmDelete() {
+  bookings = bookings.filter(b=>b.id!==pendingDeleteId);
+  saveBookings();
+  closeConfirm();
+  renderAll();
+  showToast('Booking deleted');
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ── Close modals on backdrop click ── */
+document.getElementById('modal-overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-overlay')) closeModal();
+});
+document.getElementById('confirm-overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('confirm-overlay')) closeConfirm();
+});
+
+/* ── Init ── */
+function renderAll() { renderStats(); renderBookings(); }
+renderAll();
+</script>
+</body>
+</html>
